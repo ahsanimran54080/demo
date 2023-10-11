@@ -1,0 +1,147 @@
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import KanbanCards from "./KanbanCards";
+
+function KanbanMain() {
+  const data = [
+    {
+      id: "1",
+      name: 'Task 1',
+      statusarray: [
+        { id: "20", item: 'To Do' },
+        { id: "21", item: 'To Do2' },
+        { id: "22", item: 'To Do3' },
+        { id: "23", item: 'To Do4' },
+      ]
+    },
+    {
+      id: "2",
+      name: 'Task 2',
+      statusarray: [
+        { id: "5", item: 'To Do' },
+        { id: "4", item: 'To Do2' },
+        { id: "6", item: 'To Do3' },
+        { id: "15", item: 'To Do4' },
+      ]
+    },
+    {
+      id: "3",
+      name: 'Task 3',
+      statusarray: [
+        { id: "20", item: 'To Do' },
+        { id: "29", item: 'To Do9' },
+        { id: "28", item: 'To Do35' },
+        { id: "27", item: 'To Do42' },
+      ]
+    },
+    {
+      id: "5",
+      name: 'Task 3',
+      statusarray: [
+        { id: "20", item: 'To Do' },
+        { id: "29", item: 'To Do9' },
+        { id: "28", item: 'To Do35' },
+        { id: "27", item: 'To Do42' },
+      ]
+    }
+  ]
+
+  const onDragEnd = (result) => {
+    // Handle the drag and drop logic here
+    console.log(result);
+  };
+
+  const renderKanbanCards = (item, index) => {
+    return (
+      <KanbanCards
+        key={item.id}
+        index={index}
+        id={item.id}
+        CardsData={item}
+        onDragEnd={onDragEnd}
+      />
+    );
+  };
+
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <div className="container">
+        <div className="row">
+          {data.map((item, index) => renderKanbanCards(item, index))}
+        </div>
+      </div>
+    </DndProvider>
+  );
+}
+
+export default KanbanMain;
+import { useDrag, useDrop } from "react-dnd";
+import KanbanCardItem from "./KanbanColumns";
+
+function KanbanCards({ CardsData, index, onDragEnd, columnIndex }) {
+  const [, drop] = useDrop({
+    accept: "CARD_ITEM",
+    hover: (draggedItem) => {
+      const isItemDraggedFromCurrentColumn = draggedItem.columnIndex === columnIndex;
+
+      if (!isItemDraggedFromCurrentColumn) {
+        // This item is being moved from another column.
+        // You can handle moving items between columns here.
+        onDragEnd({
+          fromColumnIndex: draggedItem.columnIndex,
+          toColumnIndex: columnIndex,
+          item: draggedItem.item,
+        });
+        draggedItem.columnIndex = columnIndex;
+      } else if (draggedItem.index !== index) {
+        // This item is being reordered within the same column.
+        // You can handle reordering here.
+        onDragEnd({
+          fromIndex: draggedItem.index,
+          toIndex: index,
+          columnIndex,
+        });
+        draggedItem.index = index;
+      }
+    },
+  });
+
+  return (
+    <div ref={drop} className="col-md-3" style={{ border: "1px solid gray", height: "200px" }}>
+      <span>{CardsData.name}</span>
+      <div>
+        <ul>
+          {CardsData?.statusarray.map((item, itemIndex) => (
+            <KanbanCardItem
+              key={item.id}
+              item={item}
+              itemIndex={itemIndex}
+              columnIndex={columnIndex}
+            />
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+export default KanbanCards;
+import { useDrag } from "react-dnd";
+
+function KanbanCardItem({ item, itemIndex }) {
+  const [{ isDragging }, itemRef] = useDrag({
+    type: "CARD_ITEM",
+    item: { id: item.id, index: itemIndex },
+  });
+
+  return (
+    <div
+      ref={itemRef}
+      className={`card ${isDragging ? "dragging" : ""}`}
+    >
+      <li>{item.item}</li>
+    </div>
+  );
+}
+
+export default KanbanCardItem;
